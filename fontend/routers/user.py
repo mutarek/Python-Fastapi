@@ -1,4 +1,10 @@
-from fastapi import APIRouter
+import hashlib
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from fontend.database import get_db
+from fontend.models.user import User as UserModel
 from fontend.schemas.user import User, UserCreate, CustomResponse
 
 router = APIRouter(
@@ -6,15 +12,24 @@ router = APIRouter(
     tags=["Users"]
 )
 
-# Dummy in-memory storage
-fake_users_db = []
-
 @router.get("/", response_model=CustomResponse[list[User]])
-def get_users():
-    return CustomResponse(isSuccess=True, statusCode=200, data=fake_users_db)
+def get_users(db: Session = Depends(get_db)):
+    users = db.query(UserModel).all()
+    return CustomResponse(isSuccess=True, statusCode=200, data=users)
 
 @router.post("/", response_model=CustomResponse[User])
-def create_user(user: UserCreate):
-    user_data = User(id=len(fake_users_db)+1, name=user.name, email=user.email, profile=user.profile)
-    fake_users_db.append(user_data)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(UserModel).filter(UserModel.email == user.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user_data = UserModel(
+        name=user.name,
+        email=user.email,
+        profile=user.profile,
+        hashed_password=hashlib.sha256(user.password.encode()).hexdigest(),
+    )
+    db.add(user_data)
+    db.commit()
+    db.refresh(user_data)
     return CustomResponse(isSuccess=True, statusCode=201, data=user_data)

@@ -1,9 +1,13 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fontend.database import Base, engine
+from fontend.models.user import User as UserModel
 from fontend.routers import user  # import router
 
 app = FastAPI(title="FastTime API 🚀", version="1.0.0")
+
+Base.metadata.create_all(bind=engine)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

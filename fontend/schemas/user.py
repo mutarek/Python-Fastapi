@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr
 T = TypeVar("T")
 
 class CustomResponse(BaseModel, Generic[T]):
-    Issueless: bool
+    isSuccess: bool
     statusCode: int
     data: T
 
@@ -18,3 +18,6 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
+
+    class Config:
+        from_attributes = True
