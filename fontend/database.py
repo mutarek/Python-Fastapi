@@ -1,15 +1,15 @@
-from pathlib import Path
-
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATABASE_PATH = BASE_DIR / "test.db"
-DATABASE_URL = f"sqlite:///{DATABASE_PATH}"  # change to postgres/mysql for prod
+from fontend.core.config import get_settings
+
+settings = get_settings()
+is_sqlite = settings.database_url.startswith("sqlite")
 
 engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
+    settings.database_url,
+    connect_args={"check_same_thread": False} if is_sqlite else {},
+    pool_pre_ping=True,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

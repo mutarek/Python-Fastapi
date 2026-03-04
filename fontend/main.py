@@ -1,11 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fontend.core.config import get_settings
 from fontend.database import Base, engine
-from fontend.models.user import User as UserModel
+from fontend import models
 from fontend.routers import user  # import router
 
-app = FastAPI(title="FastTime API 🚀", version="1.0.0")
+settings = get_settings()
+
+app = FastAPI(title=settings.app_name, version=settings.app_version, debug=settings.debug)
 
 Base.metadata.create_all(bind=engine)
 
@@ -27,3 +30,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 # Include all routers
 app.include_router(user.router)
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
